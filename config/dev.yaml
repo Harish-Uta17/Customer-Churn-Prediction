@@ -1,0 +1,17 @@
+# Development Configuration Overrides
+# Use this for local development
+
+project:
+  name: "Customer Churn Prediction"
+  version: "1.0.0"
+
+model:
+  type: "logistic_regression"
+
+logging:
+  level: "DEBUG"  # More verbose for debugging
+  log_file: "logs/dev.log"
+
+streamlit:
+  debug: true
+  theme: "light"

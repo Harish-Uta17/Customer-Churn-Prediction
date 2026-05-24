@@ -1,0 +1,128 @@
+# Default Configuration for Customer Churn Prediction
+# Use this file to control all aspects of the ML pipeline
+
+project:
+  name: "Customer Churn Prediction"
+  version: "1.0.0"
+  description: "ML pipeline for predicting customer churn in telecom industry"
+  author: "Your Name"
+
+# Data Configuration
+data:
+  raw_path: "data/churn.csv"
+  processed_path: "data/churn_processed.csv"
+  test_size: 0.2
+  random_state: 42
+  
+# Preprocessing Configuration
+preprocessing:
+  handle_missing: "median"  # "median", "mean", "drop", "forward_fill"
+  remove_duplicates: true
+  remove_outliers: false
+  outlier_threshold: 3.0
+  scale_features: true
+  scaling_method: "standard"  # "standard" or "minmax"
+  drop_columns:
+    - "customerID"
+  
+  # Encoding
+  encode_categorical: true
+  categorical_encoding: "onehot"  # "onehot" or "label"
+  
+  # Class Imbalance
+  handle_imbalance: true
+  imbalance_method: "smote"
+  smote_random_state: 42
+
+# Model Configuration
+model:
+  type: "logistic_regression"  # Selected model
+  models_to_compare:
+    - "logistic_regression"
+    - "gradient_boosting"
+    - "random_forest"
+    - "adaboost"
+    - "xgboost"
+  
+  # Hyperparameters for Logistic Regression (our best model)
+  logistic_regression:
+    C: 10
+    solver: "liblinear"
+    max_iter: 500
+    random_state: 42
+  
+  # Hyperparameters for Gradient Boosting
+  gradient_boosting:
+    n_estimators: 200
+    learning_rate: 0.1
+    max_depth: 3
+    min_samples_split: 5
+    subsample: 0.8
+    random_state: 42
+  
+  # Random Forest
+  random_forest:
+    n_estimators: 100
+    max_depth: 10
+    min_samples_split: 5
+    random_state: 42
+    n_jobs: -1
+
+# Hyperparameter Tuning Configuration
+tuning:
+  cv_folds: 5
+  scoring_metric: "roc_auc"
+  n_iterations: 20
+  random_state: 42
+  
+  # Parameter grids for tuning
+  logistic_regression_grid:
+    C: [0.01, 0.1, 1, 10, 100]
+    penalty: ["l1", "l2"]
+    solver: ["liblinear", "saga"]
+    max_iter: [100, 200, 500]
+  
+  gradient_boosting_grid:
+    n_estimators: [100, 200, 300]
+    max_depth: [3, 5, 7]
+    learning_rate: [0.01, 0.05, 0.1, 0.2]
+    subsample: [0.6, 0.8, 1.0]
+    min_samples_split: [2, 5, 10]
+
+# Evaluation Configuration
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1"
+    - "roc_auc"
+  primary_metric: "roc_auc"
+  
+  # Prediction thresholds
+  churn_risk_threshold: 0.5
+  high_risk_threshold: 0.7
+  medium_risk_threshold: 0.4
+
+# Logging Configuration
+logging:
+  level: "INFO"  # "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+  log_file: "logs/app.log"
+  log_format: "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+  max_file_size: 10485760  # 10 MB
+  backup_count: 5
+
+# Paths Configuration
+paths:
+  data_dir: "data"
+  models_dir: "models"
+  logs_dir: "logs"
+  notebooks_dir: "notebook"
+  config_dir: "config"
+
+# Streamlit Configuration
+streamlit:
+  page_layout: "wide"
+  theme: "light"  # "light" or "dark"
+  max_upload_size: 200  # MB
+  debug: false

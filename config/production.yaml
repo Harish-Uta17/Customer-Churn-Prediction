@@ -1,0 +1,23 @@
+# Production Configuration Overrides
+# Use this for production deployments
+
+project:
+  name: "Customer Churn Prediction"
+  version: "1.0.0"
+
+data:
+  random_state: 42
+
+model:
+  type: "logistic_regression"  # Use best model in production
+
+evaluation:
+  primary_metric: "roc_auc"
+
+logging:
+  level: "INFO"  # Less verbose in production
+  log_file: "logs/production.log"
+
+streamlit:
+  debug: false
+  theme: "light"

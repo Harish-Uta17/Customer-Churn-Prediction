@@ -1,0 +1,28 @@
+{
+  "model_type": "LogisticRegression",
+  "trained_date": "2026-05-23T10:30:06.466981",
+  "metrics": {
+    "Model": "Logistic Regression",
+    "Accuracy": 0.7828246983676366,
+    "Precision": 0.5813397129186603,
+    "Recall": 0.6497326203208557,
+    "F1 Score": 0.6136363636363636,
+    "ROC-AUC": 0.8363016352786173
+  },
+  "hyperparameters": {
+    "C": 10,
+    "class_weight": null,
+    "dual": false,
+    "fit_intercept": true,
+    "intercept_scaling": 1,
+    "l1_ratio": 0.0,
+    "max_iter": 500,
+    "n_jobs": null,
+    "penalty": "deprecated",
+    "random_state": 42,
+    "solver": "liblinear",
+    "tol": 0.0001,
+    "verbose": 0,
+    "warm_start": false
+  }
+}

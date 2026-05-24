@@ -1,0 +1,91 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+.jupyter/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Models (too large for version control)
+models/*.pkl
+models/*.h5
+models/*.pt
+!models/.gitkeep
+
+# Data (optional - remove if versioning data)
+data/raw/
+data/processed/
+!data/.gitkeep
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Credentials (IMPORTANT!)
+credentials.json
+secrets.json
+*.pem
+*.key
+*.pub
+
+# API Keys and sensitive data
+.secrets/
+secrets/
