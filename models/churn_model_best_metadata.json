@@ -1,6 +1,6 @@
 {
   "model_type": "LogisticRegression",
-  "trained_date": "2026-05-24T11:16:40.650794",
+  "trained_date": "2026-05-27T02:55:37.871715",
   "metrics": {
     "Model": "Logistic Regression",
     "Accuracy": 0.7828246983676366,
