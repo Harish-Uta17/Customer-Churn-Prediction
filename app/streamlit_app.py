@@ -772,11 +772,12 @@ with st.sidebar:
     page_key = next(key for label, key in PAGE_NAVIGATION if label == page)
 
     if metadata:
+        model_name = metadata.get("model_type", "AdaBoost")
         render_html(
-            '''
+            f'''
             <div class="sidebar-stat">
                 <div class="label">Model</div>
-                <div class="value">AdaBoost</div>
+                <div class="value">{model_name}</div>
                 <div class="note">Production artifact loaded from models/churn_model_best.pkl</div>
             </div>
             '''
@@ -793,7 +794,7 @@ if page == "🏠 Home":
     render_hero(
         "Customer Churn Prediction",
         "Enterprise AI/ML analytics platform for monitoring churn risk, customer behavior, retention opportunities, and predictive insights.",
-        ["AdaBoost", "Production", "AI Analytics", "Customer Retention"],
+        [metadata.get("model_type", "AdaBoost"), "Production", "AI Analytics", "Customer Retention"],
         PAGE_HERO_ICONS[page_key],
     )
 
@@ -899,7 +900,7 @@ if page == "🏠 Home":
     with right_model:
         render_info_cards(
             [
-                ("Evaluation Summary", "AdaBoost", f"Accuracy {metrics.get('Accuracy', 0):.4f} • F1 {metrics.get('F1 Score', 0):.4f}"),
+                ("Evaluation Summary", metadata.get("model_type", "AdaBoost"), f"Accuracy {metrics.get('Accuracy', 0):.4f} • F1 {metrics.get('F1 Score', 0):.4f}"),
                 ("Primary Metric", f"ROC-AUC {metrics.get('ROC-AUC', 0):.4f}", f"Recall {metrics.get('Recall', 0):.4f}"),
             ]
         )
@@ -940,7 +941,7 @@ elif page == "📈 Dashboard":
                 ("Churned", f"{churn_count:,}", "Observed churn outcomes"),
                 ("Churn rate", f"{churn_rate:.1f}%", "Share of churned users"),
                 ("Average tenure", f"{average_tenure:.0f} months", "Mean customer lifetime"),
-                ("Model family", metadata.get("model_type", "LogisticRegression") if metadata else "LogisticRegression", "Current production artifact"),
+                ("Model family", metadata.get("model_type", "AdaBoost") if metadata else "AdaBoost", "Current production artifact"),
             ]
         )
 
@@ -1130,7 +1131,7 @@ elif page == "📚 Information":
     render_info_cards(
         [
             ("Dataset", "7,043 telecom customers with demographic, service, and billing information.", None),
-            ("Best model", "AdaBoost selected by ROC-AUC after balancing the training set with SMOTE.", None),
+            ("Best model", f"{metadata.get('model_type', 'AdaBoost')} selected by ROC-AUC after balancing the training set with SMOTE.", None),
             ("Business value", "Helps reduce acquisition spend by identifying high-risk customers before they leave.", None),
             ("Deployment posture", "Optimized for local demo, portfolio showcase, and interviewer walkthroughs.", None),
         ]
@@ -1171,16 +1172,30 @@ elif page == "📚 Information":
         st.markdown('<div class="chart-card"><div class="chart-title">Model Performance</div><div class="chart-copy">Current evaluation snapshot for the production artifact.</div></div>', unsafe_allow_html=True)
         st.plotly_chart(perf_fig, width="stretch", config={"displayModeBar": False})
     with perf_right:
-        comparison_df = pd.DataFrame(
-            [
-                ["AdaBoost", "0.8637", "Best"],
-                ["Logistic Regression", "0.8607", "Very Good"],
-                ["Gradient Boosting", "0.8578", "Very Good"],
-                ["XGBoost", "0.8412", "Good"],
-                ["Random Forest", "0.8362", "Good"],
-            ],
-            columns=["Model", "ROC-AUC", "Status"],
-        )
+        # Prefer loading an up-to-date comparison from models/model_comparison.csv
+        import os
+        comp_path = Path("models/model_comparison.csv")
+        if comp_path.exists():
+            try:
+                comparison_df = pd.read_csv(comp_path)
+                # Format ROC-AUC as strings with 4 decimals for display
+                if "ROC-AUC" in comparison_df.columns:
+                    comparison_df["ROC-AUC"] = comparison_df["ROC-AUC"].map(lambda v: f"{v:.4f}")
+                # Add a status column marking the top model
+                if not "Status" in comparison_df.columns:
+                    top = comparison_df.iloc[0]["Model"] if not comparison_df.empty else None
+                    comparison_df["Status"] = comparison_df["Model"].apply(lambda m: "Best" if m == top else "")
+            except Exception:
+                # Fallback to small static table if CSV fails to load
+                comparison_df = pd.DataFrame(
+                    [[metadata.get("model_type", "AdaBoost"), f"{metrics.get('ROC-AUC', 0):.4f}", "Best"]],
+                    columns=["Model", "ROC-AUC", "Status"],
+                )
+        else:
+            comparison_df = pd.DataFrame(
+                [[metadata.get("model_type", "AdaBoost"), f"{metrics.get('ROC-AUC', 0):.4f}", "Best"]],
+                columns=["Model", "ROC-AUC", "Status"],
+            )
         st.markdown('<div class="chart-card"><div class="chart-title">Model Comparison</div><div class="chart-copy">Competing models ranked by ROC-AUC.</div></div>', unsafe_allow_html=True)
         st.dataframe(comparison_df, width="stretch", hide_index=True)
 
@@ -1197,8 +1212,7 @@ elif page == "📚 Information":
 
     st.write("")
     render_section_header("Architecture Diagram", "A simple, production-style workflow view for the deployed app.")
-    render_html(
-        '''
+    render_html(f'''
         <div class="architecture-grid">
             <div class="architecture-node">
                 <div class="node-kicker">Step 1</div>
@@ -1212,7 +1226,7 @@ elif page == "📚 Information":
             </div>
             <div class="architecture-node">
                 <div class="node-kicker">Step 3</div>
-                <div class="node-title">AdaBoost</div>
+                <div class="node-title">{metadata.get('model_type', 'AdaBoost')}</div>
                 <p class="node-copy">The saved production model scores churn probability using the trained artifact.</p>
             </div>
             <div class="architecture-node">
