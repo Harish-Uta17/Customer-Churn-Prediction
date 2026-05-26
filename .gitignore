@@ -42,7 +42,6 @@ logs/
 *.log.*
 
 # Models (too large for version control)
-models/*.pkl
 models/*.h5
 models/*.pt
 !models/.gitkeep
