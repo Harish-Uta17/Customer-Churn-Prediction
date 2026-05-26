@@ -296,19 +296,25 @@ def inject_styles() -> None:
         }
 
         .hero-card {
-            padding: 1.55rem;
+            padding: 1.9rem;
             background:
                 radial-gradient(circle at top right, rgba(111, 231, 216, 0.18), transparent 25%),
                 radial-gradient(circle at left center, rgba(142, 168, 255, 0.18), transparent 30%),
                 linear-gradient(135deg, rgba(16, 29, 49, 0.96), rgba(9, 16, 28, 0.88));
-            margin-bottom: 1.05rem;
+            margin-bottom: 1.35rem;
         }
 
         .hero-grid {
             display: grid;
             grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.85fr);
-            gap: 1rem;
+            gap: 1.35rem;
             align-items: stretch;
+        }
+
+        .hero-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.95rem;
         }
 
         .hero-kicker,
@@ -329,7 +335,7 @@ def inject_styles() -> None:
         }
 
         .hero-title {
-            margin: 0.8rem 0 0;
+            margin: 0;
             font-size: clamp(2.1rem, 3.1vw, 3.55rem);
             line-height: 1.02;
             letter-spacing: -0.04em;
@@ -337,7 +343,7 @@ def inject_styles() -> None:
         }
 
         .hero-subtitle {
-            margin: 0.85rem 0 0;
+            margin: 0;
             max-width: 68ch;
             color: #c2d3ea;
             font-size: 1.02rem;
@@ -347,8 +353,8 @@ def inject_styles() -> None:
         .badge-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-top: 1rem;
+            gap: 0.7rem;
+            margin-top: 0.1rem;
         }
 
         .hero-side {
@@ -357,8 +363,16 @@ def inject_styles() -> None:
             background:
                 radial-gradient(circle at top right, rgba(110, 202, 255, 0.14), transparent 32%),
                 linear-gradient(180deg, rgba(19, 34, 56, 0.90), rgba(10, 18, 31, 0.86));
-            padding: 1rem;
+            padding: 1.25rem;
             box-shadow: var(--shadow-soft);
+        }
+
+        .hero-side h3 {
+            margin-bottom: 0.6rem;
+        }
+
+        .hero-side p {
+            margin: 0;
         }
 
         .hero-side h3,
@@ -433,8 +447,8 @@ def inject_styles() -> None:
         }
 
         .section-block {
-            margin-top: 0.25rem;
-            margin-bottom: 1rem;
+            margin-top: 0.4rem;
+            margin-bottom: 1.25rem;
         }
 
         .section-block h2 {
@@ -604,6 +618,14 @@ def inject_styles() -> None:
                 font-size: 1.9rem;
             }
 
+            .hero-grid {
+                gap: 1rem;
+            }
+
+            .hero-content {
+                gap: 0.8rem;
+            }
+
             .section-block h2 {
                 font-size: 1.3rem;
             }
@@ -638,7 +660,7 @@ def render_hero(title: str, subtitle: str, chips: list[str], icon: str = APP_ICO
         f'''
         <div class="hero-card">
             <div class="hero-grid">
-                <div>
+                <div class="hero-content">
                     <div class="hero-kicker">Customer Retention Intelligence</div>
                     <div class="hero-title">{text(icon)} {text(title)}</div>
                     <p class="hero-subtitle">{text(subtitle)}</p>
