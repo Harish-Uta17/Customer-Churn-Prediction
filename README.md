@@ -6,14 +6,14 @@ Professional machine learning project for predicting telecom customer churn and 
 
 This project trains a churn classification model on the Telco Customer Churn dataset, evaluates multiple algorithms, saves the best-performing artifact, and serves predictions in a modern web UI.
 
-The current production model is Logistic Regression, selected by ROC-AUC.
+The current production model is AdaBoost, selected by ROC-AUC.
 
-Current evaluation snapshot:
+Current evaluation snapshot (top model — AdaBoost):
 
-- ROC-AUC: 0.8363
-- Accuracy: 0.7828
-- Precision: 0.5813
-- Recall: 0.6497
+- ROC-AUC: 0.8637
+- Accuracy: 0.7821
+- Precision: 0.5632
+- Recall: 0.7882
 
 ## What The Project Does
 

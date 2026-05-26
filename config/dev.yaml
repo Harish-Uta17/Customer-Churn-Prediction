@@ -6,7 +6,7 @@ project:
   version: "1.0.0"
 
 model:
-  type: "logistic_regression"
+  type: "adaboost"
 
 logging:
   level: "DEBUG"  # More verbose for debugging

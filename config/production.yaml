@@ -9,7 +9,7 @@ data:
   random_state: 42
 
 model:
-  type: "logistic_regression"  # Use best model in production
+  type: "adaboost"  # Use best model in production
 
 evaluation:
   primary_metric: "roc_auc"

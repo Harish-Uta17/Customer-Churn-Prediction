@@ -25,7 +25,7 @@ class ModelTrainer:
     @staticmethod
     def train_logistic_regression(X_train: np.ndarray, y_train: np.ndarray) -> LogisticRegression:
         """
-        Train Logistic Regression model (our best model).
+        Train Logistic Regression model.
         
         Args:
             X_train: Training features (should be scaled)
@@ -219,7 +219,7 @@ class ModelTrainer:
 # Convenience function
 def train_best_model(X_train: np.ndarray, y_train: np.ndarray) -> LogisticRegression:
     """
-    Train the best performing model (Logistic Regression).
+    Train the selected best model (convenience wrapper).
     
     Args:
         X_train: Training features (should be scaled)

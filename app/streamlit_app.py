@@ -776,7 +776,7 @@ with st.sidebar:
             '''
             <div class="sidebar-stat">
                 <div class="label">Model</div>
-                <div class="value">Logistic Regression</div>
+                <div class="value">AdaBoost</div>
                 <div class="note">Production artifact loaded from models/churn_model_best.pkl</div>
             </div>
             '''
@@ -793,7 +793,7 @@ if page == "🏠 Home":
     render_hero(
         "Customer Churn Prediction",
         "Enterprise AI/ML analytics platform for monitoring churn risk, customer behavior, retention opportunities, and predictive insights.",
-        ["Logistic Regression", "Production", "AI Analytics", "Customer Retention"],
+        ["AdaBoost", "Production", "AI Analytics", "Customer Retention"],
         PAGE_HERO_ICONS[page_key],
     )
 
@@ -899,7 +899,7 @@ if page == "🏠 Home":
     with right_model:
         render_info_cards(
             [
-                ("Evaluation Summary", "Logistic Regression", f"Accuracy {metrics.get('Accuracy', 0):.4f} • F1 {metrics.get('F1 Score', 0):.4f}"),
+                ("Evaluation Summary", "AdaBoost", f"Accuracy {metrics.get('Accuracy', 0):.4f} • F1 {metrics.get('F1 Score', 0):.4f}"),
                 ("Primary Metric", f"ROC-AUC {metrics.get('ROC-AUC', 0):.4f}", f"Recall {metrics.get('Recall', 0):.4f}"),
             ]
         )
@@ -1130,7 +1130,7 @@ elif page == "📚 Information":
     render_info_cards(
         [
             ("Dataset", "7,043 telecom customers with demographic, service, and billing information.", None),
-            ("Best model", "Logistic Regression selected by ROC-AUC after balancing the training set with SMOTE.", None),
+            ("Best model", "AdaBoost selected by ROC-AUC after balancing the training set with SMOTE.", None),
             ("Business value", "Helps reduce acquisition spend by identifying high-risk customers before they leave.", None),
             ("Deployment posture", "Optimized for local demo, portfolio showcase, and interviewer walkthroughs.", None),
         ]
@@ -1173,12 +1173,11 @@ elif page == "📚 Information":
     with perf_right:
         comparison_df = pd.DataFrame(
             [
-                ["Logistic Regression", "0.8363", "Best"],
-                ["Gradient Boosting", "0.8310", "Very Good"],
-                ["AdaBoost", "0.8250", "Good"],
-                ["Random Forest", "0.8230", "Good"],
-                ["XGBoost", "0.8150", "Good"],
-                ["Decision Tree", "0.6551", "Baseline"],
+                ["AdaBoost", "0.8637", "Best"],
+                ["Logistic Regression", "0.8607", "Very Good"],
+                ["Gradient Boosting", "0.8578", "Very Good"],
+                ["XGBoost", "0.8412", "Good"],
+                ["Random Forest", "0.8362", "Good"],
             ],
             columns=["Model", "ROC-AUC", "Status"],
         )
@@ -1213,7 +1212,7 @@ elif page == "📚 Information":
             </div>
             <div class="architecture-node">
                 <div class="node-kicker">Step 3</div>
-                <div class="node-title">Logistic Regression</div>
+                <div class="node-title">AdaBoost</div>
                 <p class="node-copy">The saved production model scores churn probability using the trained artifact.</p>
             </div>
             <div class="architecture-node">

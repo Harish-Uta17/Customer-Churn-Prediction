@@ -36,7 +36,7 @@ preprocessing:
 
 # Model Configuration
 model:
-  type: "logistic_regression"  # Selected model
+  type: "adaboost"  # Selected production model (updated after model comparison)
   models_to_compare:
     - "logistic_regression"
     - "gradient_boosting"
@@ -44,11 +44,16 @@ model:
     - "adaboost"
     - "xgboost"
   
-  # Hyperparameters for Logistic Regression (our best model)
+  # Hyperparameters (defaults for candidate models)
   logistic_regression:
     C: 10
     solver: "liblinear"
     max_iter: 500
+    random_state: 42
+
+  adaboost:
+    n_estimators: 100
+    learning_rate: 1.0
     random_state: 42
   
   # Hyperparameters for Gradient Boosting
