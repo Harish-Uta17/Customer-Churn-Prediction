@@ -872,19 +872,39 @@ def load_sample_data() -> pd.DataFrame:
     if not data_path.is_absolute():
         data_path = PROJECT_ROOT / data_path
 
-    # Try a set of sensible candidate locations (config path, repo raw, processed)
+    # Try a set of sensible candidate locations (config path, repo raw, processed,
+    # common deploy mounts and current working directory)
     candidates = [
         data_path,
         PROJECT_ROOT / "data" / "raw" / "churn.csv",
         PROJECT_ROOT / "data" / "processed" / "churn_processed.csv",
+        Path.cwd() / "data" / "raw" / "churn.csv",
+        Path("/mount/src/customer-churn-prediction/data/raw/churn.csv"),
+        Path("/mount/src/customer-churn-prediction/data/processed/churn_processed.csv"),
+        Path("/app/data/raw/churn.csv"),
+        Path("/workspace/data/raw/churn.csv"),
+        Path("/home/app/data/raw/churn.csv"),
     ]
 
     for candidate in candidates:
         try:
             if candidate.exists():
-                return pd.read_csv(candidate)
+                try:
+                    df = pd.read_csv(candidate)
+                except Exception:
+                    # try with low_memory disabled as a secondary attempt
+                    try:
+                        df = pd.read_csv(candidate, low_memory=False)
+                    except Exception:
+                        continue
+                # record which source we used for debugging in the session state
+                try:
+                    st.session_state["data_source"] = str(candidate)
+                except Exception:
+                    pass
+                return df
         except Exception:
-            # ignore parsing/open errors here and try next candidate
+            # ignore filesystem permission errors and try next candidate
             continue
 
     # Fallback: try loading from a GitHub raw URL configured in config.yaml (useful for deployed hosts)
@@ -898,10 +918,30 @@ def load_sample_data() -> pd.DataFrame:
     if github_raw:
         try:
             df = pd.read_csv(github_raw)
+            try:
+                st.session_state["data_source"] = github_raw
+            except Exception:
+                pass
             return df
         except Exception:
             # ignore network/parse errors and continue to return None
             pass
+
+    # As a last attempt, if the repo contains the file but under a slightly different
+    # path, try to glob for any churn*.csv under any data/raw directory within the repo.
+    try:
+        for p in PROJECT_ROOT.rglob("data/raw/*churn*.csv"):
+            try:
+                df = pd.read_csv(p)
+                try:
+                    st.session_state["data_source"] = str(p)
+                except Exception:
+                    pass
+                return df
+            except Exception:
+                continue
+    except Exception:
+        pass
 
     # If all attempts failed, return None so the UI can offer an upload fallback.
     return None
