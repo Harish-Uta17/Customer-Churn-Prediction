@@ -44,8 +44,8 @@ def check_data_quality(df: pd.DataFrame) -> Dict[str, Any]:
     quality_report = {
         'total_rows': len(df),
         'total_columns': len(df.columns),
-        'missing_count': df.isnull().sum().sum(),
-        'missing_percentage': (df.isnull().sum().sum() / (len(df) * len(df.columns))) * 100,
+        'missing_count': int(df.isnull().sum().sum()) if df is not None and len(df) > 0 and len(df.columns) > 0 else 0,
+        'missing_percentage': (df.isnull().sum().sum() / (len(df) * len(df.columns)) * 100) if df is not None and len(df) > 0 and len(df.columns) > 0 else 0.0,
         'duplicate_rows': df.duplicated().sum(),
         'memory_usage_mb': df.memory_usage(deep=True).sum() / 1024**2
     }
@@ -102,10 +102,21 @@ def get_class_distribution(y: pd.Series) -> Dict[str, int]:
     Returns:
         Dictionary with class counts and percentages
     """
+    counts = y.value_counts()
+    class_0 = int(counts.get(0, 0))
+    class_1 = int(counts.get(1, 0))
+    imbalance_ratio = None
+    try:
+        small = min([v for v in counts.tolist() if v > 0]) if not counts.empty else 0
+        if small and max(counts.tolist()) > 0:
+            imbalance_ratio = max(counts.tolist()) / small
+    except Exception:
+        imbalance_ratio = None
+
     distribution = {
-        'class_0': y.value_counts().get(0, 0),
-        'class_1': y.value_counts().get(1, 0),
-        'imbalance_ratio': max(y.value_counts()) / min(y.value_counts())
+        'class_0': class_0,
+        'class_1': class_1,
+        'imbalance_ratio': imbalance_ratio
     }
     
     logger.info(f"Class distribution: {distribution}")

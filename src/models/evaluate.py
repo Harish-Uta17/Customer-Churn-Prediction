@@ -127,8 +127,13 @@ class ModelEvaluator:
         cm = confusion_matrix(y_test, y_pred)
         
         logger.info(f"Confusion Matrix:")
-        logger.info(f"  TN: {cm[0,0]}, FP: {cm[0,1]}")
-        logger.info(f"  FN: {cm[1,0]}, TP: {cm[1,1]}")
+        # Confusion matrix may not be 2x2 in degenerate cases (e.g., single-class y_test)
+        try:
+            tn, fp, fn, tp = cm.ravel()
+            logger.info(f"  TN: {tn}, FP: {fp}")
+            logger.info(f"  FN: {fn}, TP: {tp}")
+        except Exception:
+            logger.info(f"  Confusion matrix shape: {cm.shape} - values: {cm}")
         
         return cm
     

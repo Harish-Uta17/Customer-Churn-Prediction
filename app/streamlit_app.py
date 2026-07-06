@@ -1085,56 +1085,97 @@ if page == "🏠 Home":
 
     if sample_df is not None:
         left, right = st.columns(2)
-        churn_counts = sample_df["Churn"].value_counts()
 
-        churn_fig = go.Figure(
-            data=[
-                go.Pie(
-                    labels=["No Churn", "Churn"],
-                    values=[churn_counts.get("No", 0), churn_counts.get("Yes", 0)],
-                    hole=0.6,
-                    sort=False,
-                    direction="clockwise",
-                    marker=dict(colors=["#69d39d", "#ff7b86"], line=dict(color="rgba(255,255,255,0.10)", width=1)),
-                )
-            ]
-        )
-        chart_layout(churn_fig, height=340)
-        with left:
-            st.markdown('<div class="chart-card"><div class="chart-title">Churn Distribution</div><div class="chart-copy">Share of retained versus churned customers.</div></div>', unsafe_allow_html=True)
-            st.plotly_chart(churn_fig, width="stretch", config={"displayModeBar": False})
+        # Churn distribution pie (requires 'Churn' column)
+        if "Churn" in sample_df.columns and sample_df["Churn"].dropna().size > 0:
+            churn_counts = sample_df["Churn"].value_counts()
+            churn_fig = go.Figure(
+                data=[
+                    go.Pie(
+                        labels=["No Churn", "Churn"],
+                        values=[churn_counts.get("No", 0), churn_counts.get("Yes", 0)],
+                        hole=0.6,
+                        sort=False,
+                        direction="clockwise",
+                        marker=dict(colors=["#69d39d", "#ff7b86"], line=dict(color="rgba(255,255,255,0.10)", width=1)),
+                    )
+                ]
+            )
+            chart_layout(churn_fig, height=340)
+            with left:
+                st.markdown('<div class="chart-card"><div class="chart-title">Churn Distribution</div><div class="chart-copy">Share of retained versus churned customers.</div></div>', unsafe_allow_html=True)
+                st.plotly_chart(churn_fig, width="stretch", config={"displayModeBar": False})
+        else:
+            with left:
+                st.info("Churn column is missing or empty — skipping churn distribution chart.")
 
-        contract_rate = sample_df.groupby("Contract")["Churn"].apply(lambda series: (series == "Yes").mean() * 100).sort_values(ascending=False)
-        contract_fig = go.Figure(data=[go.Bar(x=contract_rate.index, y=contract_rate.values, marker_color=["#8ea8ff", "#69d39d", "#f4c26a"])])
-        contract_fig.update_yaxes(gridcolor="rgba(184,206,240,0.14)", title_text="Churn rate %")
-        chart_layout(contract_fig, height=340, showlegend=False)
-        with right:
-            st.markdown('<div class="chart-card"><div class="chart-title">Risk by Contract Type</div><div class="chart-copy">Churn exposure by subscription structure.</div></div>', unsafe_allow_html=True)
-            st.plotly_chart(contract_fig, width="stretch", config={"displayModeBar": False})
+        # Risk by Contract Type (requires 'Contract' and 'Churn')
+        if "Contract" in sample_df.columns and "Churn" in sample_df.columns and sample_df["Contract"].dropna().size > 0:
+            try:
+                contract_rate = sample_df.groupby("Contract")["Churn"].apply(lambda series: (series == "Yes").mean() * 100).sort_values(ascending=False)
+                contract_fig = go.Figure(data=[go.Bar(x=contract_rate.index, y=contract_rate.values, marker_color=["#8ea8ff", "#69d39d", "#f4c26a"])])
+                contract_fig.update_yaxes(gridcolor="rgba(184,206,240,0.14)", title_text="Churn rate %")
+                chart_layout(contract_fig, height=340, showlegend=False)
+                with right:
+                    st.markdown('<div class="chart-card"><div class="chart-title">Risk by Contract Type</div><div class="chart-copy">Churn exposure by subscription structure.</div></div>', unsafe_allow_html=True)
+                    st.plotly_chart(contract_fig, width="stretch", config={"displayModeBar": False})
+            except Exception:
+                with right:
+                    st.info("Could not compute contract-level churn rates with the provided data.")
+        else:
+            with right:
+                st.info("Contract or Churn column is missing — skipping Risk by Contract Type chart.")
 
         left2, right2 = st.columns(2)
-        tenure_bins = pd.cut(sample_df["tenure"], bins=[0, 12, 24, 48, 72], include_lowest=True)
-        tenure_trend = (
-            sample_df.assign(TenureBand=tenure_bins)
-            .groupby("TenureBand", observed=False)["Churn"]
-            .apply(lambda series: (series == "Yes").mean() * 100)
-            .reset_index(name="ChurnRate")
-        )
-        trend_fig = go.Figure(data=[go.Scatter(x=[str(x) for x in tenure_trend["TenureBand"]], y=tenure_trend["ChurnRate"], mode="lines+markers", line=dict(color="#6fe7d8", width=3), marker=dict(size=8))])
-        trend_fig.update_yaxes(gridcolor="rgba(184,206,240,0.14)", title_text="Churn rate %")
-        chart_layout(trend_fig, height=320, showlegend=False)
-        with left2:
-            st.markdown('<div class="chart-card"><div class="chart-title">Prediction Trend</div><div class="chart-copy">Churn intensity across customer tenure bands.</div></div>', unsafe_allow_html=True)
-            st.plotly_chart(trend_fig, width="stretch", config={"displayModeBar": False})
 
-        monthly_fig = go.Figure()
-        monthly_fig.add_trace(go.Box(y=sample_df[sample_df["Churn"] == "No"]["MonthlyCharges"], name="Retained", marker_color="#69d39d", boxmean=True))
-        monthly_fig.add_trace(go.Box(y=sample_df[sample_df["Churn"] == "Yes"]["MonthlyCharges"], name="Churn", marker_color="#ff7b86", boxmean=True))
-        monthly_fig.update_yaxes(gridcolor="rgba(184,206,240,0.14)")
-        chart_layout(monthly_fig, height=320)
-        with right2:
-            st.markdown('<div class="chart-card"><div class="chart-title">Segmentation Risk</div><div class="chart-copy">Monthly charge distribution across churn outcomes.</div></div>', unsafe_allow_html=True)
-            st.plotly_chart(monthly_fig, width="stretch", config={"displayModeBar": False})
+        # Tenure trend (requires 'tenure' and 'Churn')
+        if "tenure" in sample_df.columns and sample_df["tenure"].dropna().size > 0 and "Churn" in sample_df.columns:
+            try:
+                tenure_bins = pd.cut(sample_df["tenure"], bins=[0, 12, 24, 48, 72], include_lowest=True)
+                tenure_trend = (
+                    sample_df.assign(TenureBand=tenure_bins)
+                    .groupby("TenureBand", observed=False)["Churn"]
+                    .apply(lambda series: (series == "Yes").mean() * 100)
+                    .reset_index(name="ChurnRate")
+                )
+                trend_fig = go.Figure(data=[go.Scatter(x=[str(x) for x in tenure_trend["TenureBand"]], y=tenure_trend["ChurnRate"], mode="lines+markers", line=dict(color="#6fe7d8", width=3), marker=dict(size=8))])
+                trend_fig.update_yaxes(gridcolor="rgba(184,206,240,0.14)", title_text="Churn rate %")
+                chart_layout(trend_fig, height=320, showlegend=False)
+                with left2:
+                    st.markdown('<div class="chart-card"><div class="chart-title">Prediction Trend</div><div class="chart-copy">Churn intensity across customer tenure bands.</div></div>', unsafe_allow_html=True)
+                    st.plotly_chart(trend_fig, width="stretch", config={"displayModeBar": False})
+            except Exception:
+                with left2:
+                    st.info("Could not compute tenure trend with the provided data.")
+        else:
+            with left2:
+                st.info("Tenure or Churn column is missing or empty — skipping tenure trend chart.")
+
+        # Monthly charges distribution by churn (requires 'MonthlyCharges' and 'Churn')
+        if "MonthlyCharges" in sample_df.columns and "Churn" in sample_df.columns and sample_df["MonthlyCharges"].dropna().size > 0:
+            try:
+                monthly_fig = go.Figure()
+                retained = sample_df[sample_df["Churn"] == "No"]["MonthlyCharges"]
+                churned = sample_df[sample_df["Churn"] == "Yes"]["MonthlyCharges"]
+                if retained.size == 0 and churned.size == 0:
+                    with right2:
+                        st.info("No MonthlyCharges data available for either retained or churned groups.")
+                else:
+                    if retained.size > 0:
+                        monthly_fig.add_trace(go.Box(y=retained, name="Retained", marker_color="#69d39d", boxmean=True))
+                    if churned.size > 0:
+                        monthly_fig.add_trace(go.Box(y=churned, name="Churn", marker_color="#ff7b86", boxmean=True))
+                    monthly_fig.update_yaxes(gridcolor="rgba(184,206,240,0.14)")
+                    chart_layout(monthly_fig, height=320)
+                    with right2:
+                        st.markdown('<div class="chart-card"><div class="chart-title">Segmentation Risk</div><div class="chart-copy">Monthly charge distribution across churn outcomes.</div></div>', unsafe_allow_html=True)
+                        st.plotly_chart(monthly_fig, width="stretch", config={"displayModeBar": False})
+            except Exception:
+                with right2:
+                    st.info("Could not render MonthlyCharges distributions with the provided data.")
+        else:
+            with right2:
+                st.info("MonthlyCharges or Churn column is missing — skipping segmentation risk chart.")
     else:
         st.info("Sample data is unavailable, so analytics charts could not be rendered.")
 
@@ -1243,32 +1284,50 @@ elif page == "📈 Dashboard":
     st.write("")
     left, right = st.columns(2)
 
-    churn_counts = df["Churn"].value_counts()
-    fig = go.Figure(
-        data=[
-            go.Pie(
-                labels=["No Churn", "Churn"],
-                values=[churn_counts.get("No", 0), churn_counts.get("Yes", 0)],
-                hole=0.6,
-                sort=False,
-                direction="clockwise",
-                marker=dict(colors=["#69d39d", "#ff7b86"], line=dict(color="rgba(255,255,255,0.10)", width=1)),
-            )
-        ]
-    )
-    chart_layout(fig, height=350)
-    with left:
-        st.markdown('<div class="chart-card"><div class="chart-title">Churn Distribution</div><div class="chart-copy">Share of churned versus retained customers.</div></div>', unsafe_allow_html=True)
-        st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
+    # Churn distribution pie
+    if "Churn" in df.columns and df["Churn"].dropna().size > 0:
+        churn_counts = df["Churn"].value_counts()
+        fig = go.Figure(
+            data=[
+                go.Pie(
+                    labels=["No Churn", "Churn"],
+                    values=[churn_counts.get("No", 0), churn_counts.get("Yes", 0)],
+                    hole=0.6,
+                    sort=False,
+                    direction="clockwise",
+                    marker=dict(colors=["#69d39d", "#ff7b86"], line=dict(color="rgba(255,255,255,0.10)", width=1)),
+                )
+            ]
+        )
+        chart_layout(fig, height=350)
+        with left:
+            st.markdown('<div class="chart-card"><div class="chart-title">Churn Distribution</div><div class="chart-copy">Share of churned versus retained customers.</div></div>', unsafe_allow_html=True)
+            st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
+    else:
+        with left:
+            st.info("Churn column is missing or empty — skipping churn distribution chart.")
 
-    fig = go.Figure()
-    fig.add_trace(go.Box(y=df[df["Churn"] == "No"]["tenure"], name="No Churn", marker_color="#69d39d", boxmean=True))
-    fig.add_trace(go.Box(y=df[df["Churn"] == "Yes"]["tenure"], name="Churn", marker_color="#ff7b86", boxmean=True))
-    fig.update_yaxes(gridcolor="rgba(184,206,240,0.14)", title_text="Months")
-    chart_layout(fig, height=350)
-    with right:
-        st.markdown('<div class="chart-card"><div class="chart-title">Tenure vs Churn</div><div class="chart-copy">Tenure profile separated by churn outcome.</div></div>', unsafe_allow_html=True)
-        st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
+    # Tenure boxplots
+    if "tenure" in df.columns and df["tenure"].dropna().size > 0 and "Churn" in df.columns:
+        fig = go.Figure()
+        try:
+            no_tenure = df[df["Churn"] == "No"]["tenure"]
+            yes_tenure = df[df["Churn"] == "Yes"]["tenure"]
+            if no_tenure.size > 0:
+                fig.add_trace(go.Box(y=no_tenure, name="No Churn", marker_color="#69d39d", boxmean=True))
+            if yes_tenure.size > 0:
+                fig.add_trace(go.Box(y=yes_tenure, name="Churn", marker_color="#ff7b86", boxmean=True))
+            fig.update_yaxes(gridcolor="rgba(184,206,240,0.14)", title_text="Months")
+            chart_layout(fig, height=350)
+            with right:
+                st.markdown('<div class="chart-card"><div class="chart-title">Tenure vs Churn</div><div class="chart-copy">Tenure profile separated by churn outcome.</div></div>', unsafe_allow_html=True)
+                st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
+        except Exception:
+            with right:
+                st.info("Could not render tenure boxplots with the provided data.")
+    else:
+        with right:
+            st.info("Tenure or Churn column is missing or empty — skipping tenure charts.")
 
     st.write("")
     render_info_cards(

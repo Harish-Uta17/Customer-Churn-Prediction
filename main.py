@@ -157,8 +157,12 @@ def main():
     logger.info("STEP 11: SAVING BEST MODEL")
     logger.info("="*80)
     
+    if comparison_df.empty:
+        logger.error("Model comparison returned no results. Aborting save.")
+        raise RuntimeError("No model evaluation results available to select the best model.")
+
     best_model_name = comparison_df.iloc[0]['Model']
-    best_model = models[best_model_name]
+    best_model = models.get(best_model_name)
     best_metrics = comparison_df.iloc[0].to_dict()
     
     model_path = save_trained_model(
@@ -178,7 +182,11 @@ def main():
     logger.info("✅ PIPELINE COMPLETED SUCCESSFULLY!")
     logger.info("="*80)
     logger.info(f"Best Model: {best_model_name}")
-    logger.info(f"ROC-AUC: {best_metrics.get('ROC-AUC', 'N/A'):.4f}")
+    roc_auc_val = best_metrics.get('ROC-AUC', None)
+    if isinstance(roc_auc_val, (int, float)):
+        logger.info(f"ROC-AUC: {roc_auc_val:.4f}")
+    else:
+        logger.info(f"ROC-AUC: N/A")
     logger.info(f"Saved to: {model_path}")
     
     return {

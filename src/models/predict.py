@@ -161,13 +161,13 @@ class ModelPredictor:
         """
         summary = {
             'total_predictions': len(predictions_df),
-            'churn_predictions': predictions_df['churn'].sum(),
-            'no_churn_predictions': (predictions_df['churn'] == 0).sum(),
-            'churn_percentage': (predictions_df['churn'].sum() / len(predictions_df)) * 100,
-            'avg_churn_probability': predictions_df['probability_churn'].mean(),
-            'high_risk_count': (predictions_df['probability_churn'] >= 0.7).sum(),
-            'medium_risk_count': ((predictions_df['probability_churn'] >= 0.4) & (predictions_df['probability_churn'] < 0.7)).sum(),
-            'low_risk_count': (predictions_df['probability_churn'] < 0.4).sum()
+            'churn_predictions': int(predictions_df['churn'].sum()) if 'churn' in predictions_df.columns and len(predictions_df) > 0 else 0,
+            'no_churn_predictions': int((predictions_df['churn'] == 0).sum()) if 'churn' in predictions_df.columns and len(predictions_df) > 0 else 0,
+            'churn_percentage': (predictions_df['churn'].sum() / len(predictions_df) * 100) if 'churn' in predictions_df.columns and len(predictions_df) > 0 else 0.0,
+            'avg_churn_probability': float(predictions_df['probability_churn'].mean()) if 'probability_churn' in predictions_df.columns and len(predictions_df) > 0 else 0.0,
+            'high_risk_count': int((predictions_df['probability_churn'] >= 0.7).sum()) if 'probability_churn' in predictions_df.columns and len(predictions_df) > 0 else 0,
+            'medium_risk_count': int(((predictions_df['probability_churn'] >= 0.4) & (predictions_df['probability_churn'] < 0.7)).sum()) if 'probability_churn' in predictions_df.columns and len(predictions_df) > 0 else 0,
+            'low_risk_count': int((predictions_df['probability_churn'] < 0.4).sum()) if 'probability_churn' in predictions_df.columns and len(predictions_df) > 0 else 0
         }
         
         logger.info(f"\nPrediction Summary:")
