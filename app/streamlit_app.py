@@ -887,8 +887,24 @@ def load_sample_data() -> pd.DataFrame:
             # ignore parsing/open errors here and try next candidate
             continue
 
-    tried = ", ".join(str(p) for p in candidates)
-    raise FileNotFoundError(f"Sample data not found. Tried: {tried}")
+    # Fallback: try loading from a GitHub raw URL configured in config.yaml (useful for deployed hosts)
+    github_raw = None
+    try:
+        cfg_streamlit = config.get("streamlit", {}) if isinstance(config, dict) else {}
+        github_raw = cfg_streamlit.get("github_raw_url") if cfg_streamlit else None
+    except Exception:
+        github_raw = None
+
+    if github_raw:
+        try:
+            df = pd.read_csv(github_raw)
+            return df
+        except Exception:
+            # ignore network/parse errors and continue to return None
+            pass
+
+    # If all attempts failed, return None so the UI can offer an upload fallback.
+    return None
 
 
 def risk_state(probability: float) -> tuple[str, str]:
@@ -954,12 +970,22 @@ if page == "🏠 Home":
         PAGE_HERO_ICONS[page_key],
     )
 
-    try:
-        sample_df = load_sample_data()
+    sample_df = load_sample_data()
+    if sample_df is None:
+        uploaded = st.file_uploader("Upload sample churn.csv (optional)", type=["csv"])
+        if uploaded is not None:
+            try:
+                sample_df = pd.read_csv(uploaded)
+                churn_rate = float((sample_df["Churn"] == "Yes").mean() * 100)
+            except Exception:
+                st.error("Uploaded file could not be read as a CSV. Please upload a valid churn.csv file.")
+                sample_df = None
+                churn_rate = 0.0
+        else:
+            sample_df = None
+            churn_rate = 0.0
+    else:
         churn_rate = float((sample_df["Churn"] == "Yes").mean() * 100)
-    except Exception:
-        sample_df = None
-        churn_rate = 0.0
 
     render_section_header("KPI Snapshot", "Core metrics for the current churn model.", "Executive Summary")
     render_metrics(
@@ -1085,7 +1111,23 @@ elif page == "📈 Dashboard":
     try:
         with st.spinner("Loading dataset and preparing summary..."):
             df = load_sample_data()
-            st.session_state.sample_data = df
+            # if not available, allow uploader fallback
+            if df is None:
+                uploaded = st.file_uploader("Upload sample churn.csv (optional)", type=["csv"])
+                if uploaded is not None:
+                    try:
+                        df = pd.read_csv(uploaded)
+                        st.session_state.sample_data = df
+                    except Exception:
+                        st.error("Uploaded file could not be read as a CSV. Please upload a valid churn.csv file.")
+                        df = None
+                else:
+                    df = None
+            else:
+                st.session_state.sample_data = df
+
+        if df is None:
+            raise FileNotFoundError("No sample data available and no upload provided.")
 
         churn_count = int((df["Churn"] == "Yes").sum())
         churn_rate = churn_count / len(df) * 100

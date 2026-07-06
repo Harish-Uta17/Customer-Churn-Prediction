@@ -131,3 +131,5 @@ streamlit:
   theme: "light"  # "light" or "dark"
   max_upload_size: 200  # MB
   debug: false
+  # Optional: public raw URL to the sample CSV (used when local files are not present)
+  github_raw_url: "https://raw.githubusercontent.com/Harish-Uta17/Customer-Churn-Prediction/main/data/raw/churn.csv"
