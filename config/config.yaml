@@ -9,8 +9,8 @@ project:
 
 # Data Configuration
 data:
-  raw_path: "data/churn.csv"
-  processed_path: "data/churn_processed.csv"
+  raw_path: "data/raw/churn.csv"
+  processed_path: "data/processed/churn_processed.csv"
   test_size: 0.2
   random_state: 42
   

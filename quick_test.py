@@ -189,6 +189,17 @@ def test_config():
     
     return True
 
+
+def get_raw_data_path() -> Path:
+    """Resolve the configured raw dataset path relative to the project root."""
+    from src.config import ConfigManager
+
+    config = ConfigManager()
+    raw_path = Path(config.get("data.raw_path", "data/raw/churn.csv"))
+    if not raw_path.is_absolute():
+        raw_path = PROJECT_ROOT / raw_path
+    return raw_path
+
 def test_data_loader():
     """Test 5: Data Loader Module"""
     print_section("TEST 5: Data Loader Module (src/data/loader.py)")
@@ -197,10 +208,11 @@ def test_data_loader():
         from src.data.loader import DataLoader
         
         # Check data file exists
-        data_path = Path("data/churn.csv")
+        data_path = get_raw_data_path()
+
         if not data_path.exists():
             print_fail(f"Data file not found: {data_path}")
-            print(f"   {YELLOW}Download data/churn.csv from original notebook!{END}")
+            print(f"   {YELLOW}Download or place the file at data/raw/churn.csv{END}")
             return False
         print_pass(f"Data file found: {data_path}")
         
@@ -238,7 +250,7 @@ def test_data_cleaner():
         from src.data.loader import DataLoader
         import pandas as pd
         
-        df = DataLoader.load_csv("data/churn.csv")
+        df = DataLoader.load_csv(str(get_raw_data_path()))
         original_shape = df.shape
         
         # Test 1: Encode target
@@ -282,7 +294,7 @@ def test_preprocessor():
         from src.data.cleaner import DataCleaner, clean_data
         from sklearn.model_selection import train_test_split
         
-        df = DataLoader.load_csv("data/churn.csv")
+        df = DataLoader.load_csv(str(get_raw_data_path()))
         df = clean_data(df)
         df, _ = DataCleaner.encode_target(df, 'Churn')
         
@@ -327,7 +339,7 @@ def test_model_trainer():
         from sklearn.model_selection import train_test_split
         
         print("Preparing training data...")
-        df = DataLoader.load_csv("data/churn.csv")
+        df = DataLoader.load_csv(str(get_raw_data_path()))
         df = clean_data(df)
         df, _ = DataCleaner.encode_target(df, 'Churn')
         X, y = FeatureEngineer.prepare_features(df, 'Churn')
@@ -366,7 +378,7 @@ def test_model_evaluator():
         from sklearn.model_selection import train_test_split
         
         print("Preparing training data...")
-        df = DataLoader.load_csv("data/churn.csv")
+        df = DataLoader.load_csv(str(get_raw_data_path()))
         df = clean_data(df)
         df, _ = DataCleaner.encode_target(df, 'Churn')
         X, y = FeatureEngineer.prepare_features(df, 'Churn')
@@ -423,7 +435,7 @@ def test_model_manager():
         import json
         
         print("Preparing training data...")
-        df = DataLoader.load_csv("data/churn.csv")
+        df = DataLoader.load_csv(str(get_raw_data_path()))
         df = clean_data(df)
         df, _ = DataCleaner.encode_target(df, 'Churn')
         X, y = FeatureEngineer.prepare_features(df, 'Churn')

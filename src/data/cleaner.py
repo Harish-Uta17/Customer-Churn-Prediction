@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 from pandas.api.types import is_object_dtype, is_string_dtype
@@ -256,3 +258,12 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df = DataCleaner.fix_data_types(df)
     df = DataCleaner.drop_columns(df, DROP_COLUMNS)
     return df
+
+
+def save_cleaned_data(df: pd.DataFrame, output_path: str) -> str:
+    """Save cleaned dataframe to disk and return the saved path."""
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(path, index=False)
+    logger.info(f"✅ Cleaned data saved to: {path}")
+    return str(path)

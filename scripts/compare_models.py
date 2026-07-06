@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 try:
+    from src.config import ConfigManager
     from src.data.loader import DataLoader
     from src.data.cleaner import DataCleaner, clean_data
     from src.preprocessing.preprocessor import FeatureEngineer
@@ -27,9 +28,13 @@ except Exception:
 
 
 def main():
-    data_path = Path("data/churn.csv")
+    config = ConfigManager()
+    data_path = Path(config.get("data.raw_path", "data/raw/churn.csv"))
+    if not data_path.is_absolute():
+        data_path = ROOT / data_path
+
     if not data_path.exists():
-        raise SystemExit(f"Data file not found: {data_path} — please ensure data/churn.csv exists")
+        raise SystemExit(f"Data file not found: {data_path} — please ensure data/raw/churn.csv exists")
 
     df = DataLoader.load_csv(str(data_path))
     df = clean_data(df)

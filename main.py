@@ -31,7 +31,7 @@ from src.utils.logger import get_logger
 from src.utils.constants import RANDOM_STATE, TARGET_COLUMN
 from src.config import load_config
 from src.data.loader import load_data
-from src.data.cleaner import clean_data, DataCleaner
+from src.data.cleaner import clean_data, DataCleaner, save_cleaned_data
 from src.preprocessing.preprocessor import FeatureEngineer, encode_and_prepare
 from src.models.train import ModelTrainer
 from src.models.evaluate import ModelEvaluator
@@ -59,7 +59,7 @@ def main():
     logger.info("STEP 2: LOADING DATA")
     logger.info("="*80)
     
-    raw_data_path = Path(config.get('data.raw_path', 'data/churn.csv'))
+    raw_data_path = Path(config.get('data.raw_path', 'data/raw/churn.csv'))
     if not raw_data_path.is_absolute():
         raw_data_path = PROJECT_ROOT / raw_data_path
 
@@ -71,7 +71,12 @@ def main():
     logger.info("STEP 3: DATA CLEANING")
     logger.info("="*80)
     
+    processed_data_path = Path(config.get('data.processed_path', 'data/processed/churn_processed.csv'))
+    if not processed_data_path.is_absolute():
+        processed_data_path = PROJECT_ROOT / processed_data_path
+
     df = clean_data(df)
+    save_cleaned_data(df, str(processed_data_path))
     logger.info(f"Cleaned dataset shape: {df.shape}")
     
     # ===== STEP 4: FEATURE ENGINEERING =====

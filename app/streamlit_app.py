@@ -19,6 +19,7 @@ import streamlit as st
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.config import load_config
 from src.models.model_manager import ModelManager
 from src.utils.logger import get_logger
 
@@ -106,6 +107,9 @@ def inject_styles() -> None:
         .block-container {
             width: 100%;
             max-width: 100%;
+            box-sizing: border-box;
+            padding-left: 1.25rem;
+            padding-right: 1.25rem;
             padding-top: 1.1rem;
             padding-bottom: 2.2rem;
         }
@@ -280,7 +284,19 @@ def inject_styles() -> None:
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
-            gap: 0.95rem;
+            gap: 0.72rem;
+        }
+
+        .tight-metric-shell {
+            border: 1px solid rgba(184, 206, 240, 0.14);
+            border-radius: 20px;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.02);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .tight-metric-shell .kpi-grid {
+            gap: 0.72rem;
         }
 
         .feature-grid {
@@ -306,15 +322,34 @@ def inject_styles() -> None:
 
         .hero-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.85fr);
-            gap: 1.35rem;
+            grid-template-columns: minmax(0, 1.7fr) minmax(240px, 0.7fr);
+            gap: 1.1rem;
             align-items: stretch;
         }
 
         .hero-content {
             display: flex;
             flex-direction: column;
-            gap: 0.95rem;
+            gap: 0.8rem;
+        }
+
+        .hero-side {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero-side h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            line-height: 1.12;
+            letter-spacing: -0.03em;
+        }
+
+        .hero-side p {
+            margin: 0.85rem 0 0;
+            color: #c2d3ea;
+            line-height: 1.55;
         }
 
         .hero-kicker,
@@ -336,8 +371,8 @@ def inject_styles() -> None:
 
         .hero-title {
             margin: 0;
-            font-size: clamp(2.1rem, 3.1vw, 3.55rem);
-            line-height: 1.02;
+            font-size: clamp(2.0rem, 2.9vw, 3.15rem);
+            line-height: 1.0;
             letter-spacing: -0.04em;
             font-weight: 900;
         }
@@ -346,15 +381,15 @@ def inject_styles() -> None:
             margin: 0;
             max-width: 68ch;
             color: #c2d3ea;
-            font-size: 1.02rem;
-            line-height: 1.72;
+            font-size: 0.98rem;
+            line-height: 1.6;
         }
 
         .badge-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.7rem;
-            margin-top: 0.1rem;
+            gap: 0.55rem;
+            margin-top: 0.05rem;
         }
 
         .hero-side {
@@ -397,10 +432,13 @@ def inject_styles() -> None:
         }
 
         .metric-card {
-            min-height: 138px;
+            min-height: 104px;
+            padding: 0.8rem 0.95rem;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
         }
 
         .label {
@@ -420,6 +458,7 @@ def inject_styles() -> None:
         .metric-card .value {
             font-size: clamp(1.55rem, 2.2vw, 2.45rem);
             line-height: 1.05;
+            margin-top: 0.22rem;
         }
 
         .feature-card,
@@ -436,7 +475,7 @@ def inject_styles() -> None:
         }
 
         .metric-card .note {
-            margin-top: 0.55rem;
+            margin-top: 0.22rem;
             color: #c1d2ea;
             font-size: 0.88rem;
         }
@@ -459,6 +498,48 @@ def inject_styles() -> None:
 
         .section-block p {
             margin: 0.35rem 0 0;
+        }
+
+        .prediction-form-tight {
+            margin-top: 0.15rem;
+        }
+
+        .prediction-form-tight [data-testid="column"] {
+            gap: 0.35rem;
+        }
+
+        .prediction-form-tight label,
+        .prediction-form-tight .stSelectbox,
+        .prediction-form-tight .stNumberInput {
+            margin-bottom: 0.1rem;
+        }
+
+        .prediction-form-tight [data-baseweb="select"] > div,
+        .prediction-form-tight [data-baseweb="input"] {
+            min-height: 2.45rem;
+        }
+
+        /* Force the main metric block container to not stretch */
+        [data-testid="stMetric"] {
+            background-color: #f8f9fa; /* adjust color if needed */
+            border: 1px solid #e6e9ef;
+            padding: 10px 15px !important;
+            border-radius: 8px;
+            max-height: 110px !important; /* Forces it to stay short */
+            display: flex;
+            flex-direction: column;
+            justify-content: center !important;
+        }
+
+        /* Minimize spacing between the metric label and value */
+        [data-testid="stMetricLabel"] {
+            margin-bottom: -5px !important;
+            line-height: 1.2 !important;
+        }
+
+        [data-testid="stMetricValue"] {
+            font-size: 2rem !important;
+            line-height: 1.1 !important;
         }
 
         .chart-card {
@@ -693,7 +774,39 @@ def render_metrics(items: list[tuple[str, str, str]]) -> None:
             </div>
             '''
         )
-    render_html(f'<div class="kpi-grid">{"".join(cards)}</div>')
+
+    with st.container():
+        st.markdown(
+            """
+            <style>
+            .tight-metric-shell {
+                border: 1px solid rgba(184, 206, 240, 0.14);
+                border-radius: 20px;
+                padding: 0.75rem;
+                background: rgba(255, 255, 255, 0.02);
+                box-shadow: var(--shadow-soft);
+            }
+            .tight-metric-shell .kpi-grid {
+                gap: 0.72rem;
+            }
+            .tight-metric-shell .metric-card {
+                min-height: 104px;
+                padding: 0.8rem 0.95rem;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+            }
+            .tight-metric-shell .metric-card .value {
+                margin-top: 0.22rem;
+            }
+            .tight-metric-shell .metric-card .note {
+                margin-top: 0.22rem;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        render_html(f'<div class="tight-metric-shell"><div class="kpi-grid">{"".join(cards)}</div></div>')
 
 
 def render_feature_cards(items: list[tuple[str, str]]) -> None:
@@ -754,7 +867,15 @@ def load_trained_model():
 
 @st.cache_data
 def load_sample_data() -> pd.DataFrame:
-    return pd.read_csv(PROJECT_ROOT / "data" / "churn.csv")
+    config = load_config(str(PROJECT_ROOT / "config" / "config.yaml"))
+    data_path = Path(config.get("data.raw_path", "data/raw/churn.csv"))
+    if not data_path.is_absolute():
+        data_path = PROJECT_ROOT / data_path
+
+    if not data_path.exists():
+        raise FileNotFoundError(f"Sample data not found: {data_path}")
+
+    return pd.read_csv(data_path)
 
 
 def risk_state(probability: float) -> tuple[str, str]:
@@ -1022,7 +1143,10 @@ elif page == "🔮 Predict Churn":
         render_section_header("Prediction Workspace", "The form below is aligned with the saved training schema so predictions are stable and fast.")
 
         with st.form("prediction_form"):
-            left_form, right_form = st.columns(2)
+            form_shell = st.container()
+            with form_shell:
+                st.markdown('<div class="prediction-form-tight">', unsafe_allow_html=True)
+            left_form, right_form = st.columns(2, gap="small")
 
             with left_form:
                 st.markdown('<div class="panel-card"><div class="section-badge">Customer Information</div><p class="chart-copy" style="margin-top:0.55rem;">Demographic and household attributes.</p></div>', unsafe_allow_html=True)
@@ -1031,7 +1155,6 @@ elif page == "🔮 Predict Churn":
                 partner = st.selectbox("Has Partner", ["Yes", "No"])
                 dependents = st.selectbox("Has Dependents", ["Yes", "No"])
 
-                st.write("")
                 st.markdown('<div class="panel-card"><div class="section-badge">Service Usage</div><p class="chart-copy" style="margin-top:0.55rem;">Connectivity and support profile.</p></div>', unsafe_allow_html=True)
                 phone_service = st.selectbox("Phone Service", ["Yes", "No"])
                 internet_service = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
@@ -1044,13 +1167,14 @@ elif page == "🔮 Predict Churn":
                 monthly_charges = st.number_input("Monthly Charges ($)", 0.0, 200.0, 65.0)
                 total_charges = st.number_input("Total Charges ($)", 0.0, 10000.0, 1500.0)
 
-                st.write("")
                 st.markdown('<div class="panel-card"><div class="section-badge">Additional Services</div><p class="chart-copy" style="margin-top:0.55rem;">Support and billing configuration.</p></div>', unsafe_allow_html=True)
                 tech_support = st.selectbox("Tech Support", ["Yes", "No", "No internet service"])
                 streaming_tv = st.selectbox("Streaming TV", ["Yes", "No", "No internet service"])
                 paperless_billing = st.selectbox("Paperless Billing", ["Yes", "No"])
 
             submitted = st.form_submit_button("🔮 Predict Churn")
+
+            st.markdown('</div>', unsafe_allow_html=True)
 
         if submitted:
             customer_data = pd.DataFrame(
@@ -1159,7 +1283,6 @@ elif page == "📚 Information":
         ]
     )
 
-    st.write("")
     render_section_header("Features Used", "The main customer signals used by the saved model.")
     render_feature_cards(
         [

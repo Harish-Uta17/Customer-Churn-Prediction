@@ -36,7 +36,10 @@ Customer_Churn_prediction/
 │   ├── dev.yaml                 # Development configuration
 │   └── production.yaml          # Production configuration
 ├── data/
-│   └── churn.csv                # Training dataset
+│   ├── raw/
+│   │   └── churn.csv            # Training dataset
+│   └── processed/
+│       └── churn_processed.csv  # Cleaned dataset written by the pipeline
 ├── images/
 │   ├── confusion_matrix.png     # Documentation / report image
 │   ├── feature_importance.png   # Documentation / report image
@@ -72,7 +75,7 @@ Customer_Churn_prediction/
 ## Project Flow
 
 1. Load configuration from `config/config.yaml`.
-2. Read the raw dataset from `data/churn.csv`.
+2. Read the raw dataset from `data/raw/churn.csv`.
 3. Clean data, fix types, and remove inconsistencies.
 4. Encode the target and one-hot encode categorical features.
 5. Split data into train and test sets.
@@ -86,7 +89,7 @@ Customer_Churn_prediction/
 
 The repository includes the dataset required to train and test the project:
 
-- `data/churn.csv`
+- `data/raw/churn.csv`
 
 The training and dashboard flow expect this file to be present.
 
@@ -261,7 +264,7 @@ The project is compatible with Streamlit Cloud, Render, Railway, or similar Pyth
 Before deployment, make sure:
 
 - The trained model artifact exists in `models/`.
-- `data/churn.csv` is available if you want the dashboard to auto-load the dataset.
+- `data/raw/churn.csv` is available if you want the dashboard to auto-load the dataset.
 - The required Python dependencies are installed.
 
 ## License

@@ -4,6 +4,7 @@
 Overwrites: models/churn_model_best.pkl and models/churn_model_best_metadata.json
 """
 from pathlib import Path
+from src.config import ConfigManager
 from src.data.loader import DataLoader
 from src.data.cleaner import DataCleaner, clean_data
 from src.preprocessing.preprocessor import FeatureEngineer
@@ -13,7 +14,11 @@ from sklearn.model_selection import train_test_split
 
 
 def main():
-    data_path = Path("data/churn.csv")
+    config = ConfigManager()
+    data_path = Path(config.get("data.raw_path", "data/raw/churn.csv"))
+    if not data_path.is_absolute():
+        data_path = Path(__file__).resolve().parents[1] / data_path
+
     if not data_path.exists():
         raise SystemExit(f"Data file not found: {data_path}")
 
