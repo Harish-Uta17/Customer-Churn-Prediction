@@ -872,10 +872,23 @@ def load_sample_data() -> pd.DataFrame:
     if not data_path.is_absolute():
         data_path = PROJECT_ROOT / data_path
 
-    if not data_path.exists():
-        raise FileNotFoundError(f"Sample data not found: {data_path}")
+    # Try a set of sensible candidate locations (config path, repo raw, processed)
+    candidates = [
+        data_path,
+        PROJECT_ROOT / "data" / "raw" / "churn.csv",
+        PROJECT_ROOT / "data" / "processed" / "churn_processed.csv",
+    ]
 
-    return pd.read_csv(data_path)
+    for candidate in candidates:
+        try:
+            if candidate.exists():
+                return pd.read_csv(candidate)
+        except Exception:
+            # ignore parsing/open errors here and try next candidate
+            continue
+
+    tried = ", ".join(str(p) for p in candidates)
+    raise FileNotFoundError(f"Sample data not found. Tried: {tried}")
 
 
 def risk_state(probability: float) -> tuple[str, str]:
