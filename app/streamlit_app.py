@@ -1010,22 +1010,53 @@ if page == "🏠 Home":
         PAGE_HERO_ICONS[page_key],
     )
 
+    # Load built-in sample dataset by default
     sample_df = load_sample_data()
-    if sample_df is None:
-        uploaded = st.file_uploader("Upload sample churn.csv (optional)", type=["csv"])
-        if uploaded is not None:
+
+    # Optional: allow users to upload their own CSV to override the built-in dataset
+    uploaded = st.file_uploader("Upload sample churn.csv (optional)", type=["csv"]) 
+    if uploaded is not None:
+        try:
+            sample_df = pd.read_csv(uploaded)
             try:
-                sample_df = pd.read_csv(uploaded)
-                churn_rate = float((sample_df["Churn"] == "Yes").mean() * 100)
+                st.session_state["data_source"] = "uploaded"
             except Exception:
-                st.error("Uploaded file could not be read as a CSV. Please upload a valid churn.csv file.")
-                sample_df = None
-                churn_rate = 0.0
-        else:
-            sample_df = None
-            churn_rate = 0.0
-    else:
-        churn_rate = float((sample_df["Churn"] == "Yes").mean() * 100)
+                pass
+        except Exception:
+            st.warning("Uploaded file could not be read as a CSV. Using the built-in sample dataset instead.")
+
+    # If load_sample_data did not find anything, try explicit packaged path and GitHub raw as final fallbacks
+    if sample_df is None:
+        try:
+            packaged = PROJECT_ROOT / "data" / "raw" / "churn.csv"
+            if packaged.exists():
+                sample_df = pd.read_csv(packaged)
+                try:
+                    st.session_state["data_source"] = str(packaged)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    if sample_df is None:
+        try:
+            cfg = load_config(str(PROJECT_ROOT / "config" / "config.yaml"))
+            github_raw = cfg.get("streamlit", {}).get("github_raw_url")
+            if github_raw:
+                sample_df = pd.read_csv(github_raw)
+                try:
+                    st.session_state["data_source"] = github_raw
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    # Ensure we always have a DataFrame to render (empty fallback avoids crashes)
+    if sample_df is None:
+        sample_df = pd.DataFrame({"Churn": [], "tenure": [], "MonthlyCharges": []})
+
+    # Compute churn rate safely
+    churn_rate = float((sample_df.get("Churn") == "Yes").mean() * 100) if "Churn" in sample_df.columns and len(sample_df) > 0 else 0.0
 
     render_section_header("KPI Snapshot", "Core metrics for the current churn model.", "Executive Summary")
     render_metrics(
@@ -1148,81 +1179,105 @@ elif page == "📈 Dashboard":
 
     render_section_header("Dashboard Summary", "The dataset loads automatically so the key summary and charts appear immediately.")
 
-    try:
-        with st.spinner("Loading dataset and preparing summary..."):
-            df = load_sample_data()
-            # if not available, allow uploader fallback
-            if df is None:
-                uploaded = st.file_uploader("Upload sample churn.csv (optional)", type=["csv"])
-                if uploaded is not None:
-                    try:
-                        df = pd.read_csv(uploaded)
-                        st.session_state.sample_data = df
-                    except Exception:
-                        st.error("Uploaded file could not be read as a CSV. Please upload a valid churn.csv file.")
-                        df = None
-                else:
-                    df = None
-            else:
+    with st.spinner("Loading dataset and preparing summary..."):
+        df = load_sample_data()
+        uploaded = st.file_uploader("Upload sample churn.csv (optional)", type=["csv"]) 
+        if uploaded is not None:
+            try:
+                df = pd.read_csv(uploaded)
                 st.session_state.sample_data = df
+                try:
+                    st.session_state["data_source"] = "uploaded"
+                except Exception:
+                    pass
+            except Exception:
+                st.warning("Uploaded file could not be read as a CSV. Using the built-in sample dataset instead.")
+
+        # If still None, try packaged path then GitHub raw as final fallbacks
+        if df is None:
+            try:
+                packaged = PROJECT_ROOT / "data" / "raw" / "churn.csv"
+                if packaged.exists():
+                    df = pd.read_csv(packaged)
+                    try:
+                        st.session_state["data_source"] = str(packaged)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
 
         if df is None:
-            raise FileNotFoundError("No sample data available and no upload provided.")
+            try:
+                cfg = load_config(str(PROJECT_ROOT / "config" / "config.yaml"))
+                github_raw = cfg.get("streamlit", {}).get("github_raw_url")
+                if github_raw:
+                    df = pd.read_csv(github_raw)
+                    try:
+                        st.session_state["data_source"] = github_raw
+                    except Exception:
+                        pass
+            except Exception:
+                pass
 
-        churn_count = int((df["Churn"] == "Yes").sum())
-        churn_rate = churn_count / len(df) * 100
-        average_tenure = float(df["tenure"].mean())
+        if df is None:
+            df = pd.DataFrame({"Churn": [], "tenure": [], "MonthlyCharges": []})
 
-        render_metrics(
-            [
-                ("Total customers", f"{len(df):,}", "Rows loaded from churn.csv"),
-                ("Churned", f"{churn_count:,}", "Observed churn outcomes"),
-                ("Churn rate", f"{churn_rate:.1f}%", "Share of churned users"),
-                ("Average tenure", f"{average_tenure:.0f} months", "Mean customer lifetime"),
-                ("Model family", metadata.get("model_type", "AdaBoost") if metadata else "AdaBoost", "Current production artifact"),
-            ]
-        )
+    churn_count = int((df.get("Churn") == "Yes").sum()) if "Churn" in df.columns and len(df) > 0 else 0
+    churn_rate = churn_count / len(df) * 100 if len(df) > 0 else 0.0
+    average_tenure = float(df["tenure"].mean()) if "tenure" in df.columns and len(df) > 0 else 0.0
 
-        st.write("")
-        left, right = st.columns(2)
+    # Informational note when using the built-in dataset (upload is optional)
+    if st.session_state.get("data_source") != "uploaded":
+        st.info("Showing insights using the built-in sample churn dataset. Upload your own CSV to analyze custom data.")
 
-        churn_counts = df["Churn"].value_counts()
-        fig = go.Figure(
-            data=[
-                go.Pie(
-                    labels=["No Churn", "Churn"],
-                    values=[churn_counts.get("No", 0), churn_counts.get("Yes", 0)],
-                    hole=0.6,
-                    sort=False,
-                    direction="clockwise",
-                    marker=dict(colors=["#69d39d", "#ff7b86"], line=dict(color="rgba(255,255,255,0.10)", width=1)),
-                )
-            ]
-        )
-        chart_layout(fig, height=350)
-        with left:
-            st.markdown('<div class="chart-card"><div class="chart-title">Churn Distribution</div><div class="chart-copy">Share of churned versus retained customers.</div></div>', unsafe_allow_html=True)
-            st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
+    render_metrics(
+        [
+            ("Total customers", f"{len(df):,}", "Rows loaded from churn.csv"),
+            ("Churned", f"{churn_count:,}", "Observed churn outcomes"),
+            ("Churn rate", f"{churn_rate:.1f}%", "Share of churned users"),
+            ("Average tenure", f"{average_tenure:.0f} months", "Mean customer lifetime"),
+            ("Model family", metadata.get("model_type", "AdaBoost") if metadata else "AdaBoost", "Current production artifact"),
+        ]
+    )
 
-        fig = go.Figure()
-        fig.add_trace(go.Box(y=df[df["Churn"] == "No"]["tenure"], name="No Churn", marker_color="#69d39d", boxmean=True))
-        fig.add_trace(go.Box(y=df[df["Churn"] == "Yes"]["tenure"], name="Churn", marker_color="#ff7b86", boxmean=True))
-        fig.update_yaxes(gridcolor="rgba(184,206,240,0.14)", title_text="Months")
-        chart_layout(fig, height=350)
-        with right:
-            st.markdown('<div class="chart-card"><div class="chart-title">Tenure vs Churn</div><div class="chart-copy">Tenure profile separated by churn outcome.</div></div>', unsafe_allow_html=True)
-            st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
+    st.write("")
+    left, right = st.columns(2)
 
-        st.write("")
-        render_info_cards(
-            [
-                ("Interpretation", "Higher churn density among early-tenure customers signals a retention window worth prioritizing.", None),
-                ("Billing lens", "Monthly billing pressure and contract type are the strongest business-facing signals to watch.", None),
-                ("Usage context", "Use the dashboard to explain customer segments before moving to manual prediction.", None),
-            ]
-        )
-    except Exception as error:
-        st.error(f"Could not load sample data: {error}")
+    churn_counts = df["Churn"].value_counts()
+    fig = go.Figure(
+        data=[
+            go.Pie(
+                labels=["No Churn", "Churn"],
+                values=[churn_counts.get("No", 0), churn_counts.get("Yes", 0)],
+                hole=0.6,
+                sort=False,
+                direction="clockwise",
+                marker=dict(colors=["#69d39d", "#ff7b86"], line=dict(color="rgba(255,255,255,0.10)", width=1)),
+            )
+        ]
+    )
+    chart_layout(fig, height=350)
+    with left:
+        st.markdown('<div class="chart-card"><div class="chart-title">Churn Distribution</div><div class="chart-copy">Share of churned versus retained customers.</div></div>', unsafe_allow_html=True)
+        st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
+
+    fig = go.Figure()
+    fig.add_trace(go.Box(y=df[df["Churn"] == "No"]["tenure"], name="No Churn", marker_color="#69d39d", boxmean=True))
+    fig.add_trace(go.Box(y=df[df["Churn"] == "Yes"]["tenure"], name="Churn", marker_color="#ff7b86", boxmean=True))
+    fig.update_yaxes(gridcolor="rgba(184,206,240,0.14)", title_text="Months")
+    chart_layout(fig, height=350)
+    with right:
+        st.markdown('<div class="chart-card"><div class="chart-title">Tenure vs Churn</div><div class="chart-copy">Tenure profile separated by churn outcome.</div></div>', unsafe_allow_html=True)
+        st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
+
+    st.write("")
+    render_info_cards(
+        [
+            ("Interpretation", "Higher churn density among early-tenure customers signals a retention window worth prioritizing.", None),
+            ("Billing lens", "Monthly billing pressure and contract type are the strongest business-facing signals to watch.", None),
+            ("Usage context", "Use the dashboard to explain customer segments before moving to manual prediction.", None),
+        ]
+    )
 
 elif page == "🔮 Predict Churn":
     render_hero(
