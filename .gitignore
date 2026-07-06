@@ -49,6 +49,8 @@ models/*.pt
 # Data (optional - remove if versioning data)
 data/raw/
 data/processed/
+!data/raw/churn.csv
+!data/processed/churn_processed.csv
 !data/.gitkeep
 
 # Temporary files
